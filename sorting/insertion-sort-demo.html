@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Language" content="zh-cn" />
+<title>Insertion Sort Demo by Wangxy</title>
+</head>
+
+<body>
+	<h1>Insertion Sort Demo by Wangxy</h1>
+	<p>
+		This demonstration require <strong>FireFox</strong>, or <strong>Google
+			Chrome</strong> browser.
+	</p>
+	<p>
+		<strong>Note: You may get incorrect result if you're using
+			Microsoft Internet Explorer.</strong>
+	</p>
+	<div>
+		Numbers:<input type="text" id="count" value="5" style="width: 32px;" />
+		<button onclick="onGenerateNumbers()">Generate Random Numbers</button>
+		<br />
+		<textarea id="numbers" style="width: 640px; height: 64px;"></textarea>
+		<br /> <input id="ascending" type="radio" name="order" value="1"
+			checked="true" />Ascending <input type="radio" name="order" value="0" />Descending
+		<button onclick="onSort()">Sort</button>
+		<button onclick="startSort()">Start Sort!</button>
+	</div>
+
+
+	<div id="graph"></div>
+
+	<table id="output" border="1" cellpadding="5px">
+		<tr>
+			<td>No numbers.</td>
+		</tr>
+	</table>
+
+<script type="text/javascript">
+var count = document.getElementById("count");
+var numbers = document.getElementById("numbers");
+var graph = document.getElementById('graph');
+var output = document.getElementById('output');
+var ascending = document.getElementById('ascending');
+
+function generateRandomNumbers() {
+    var A = [];
+    var NUMBER_COUNT = parseInt(count.value);
+    for (var i = 0; i < NUMBER_COUNT; i++ ) {
+        A.push(Math.round(Math.random()*640));
+    }
+    return A;
+}
+
+function updateNumbersView(arrayOfNumbers) {
+    var str = "";
+    for ( var i = 0; i < arrayOfNumbers.length; i++ ) {
+        str += arrayOfNumbers[i].toString() + ((i < arrayOfNumbers.length - 1) ? ", " : "");
+    }
+    numbers.value = str;
+}
+
+function generateGraphHtml(arrayOfNumbers) {
+    var graphStr = "";
+    for(var i = 0; i < arrayOfNumbers.length; i++ ) {
+        graphStr += "<div id=\""+ arrayOfNumbers[i] + "\"><span>" + arrayOfNumbers[i] 
+            + "</span>"
+            + "<div style=\"width:640px;height:16px;background-color:transparent;border:1px solid black;margin:2px;padding:0;\">"
+              + "<div style=\"width:" + arrayOfNumbers[i] + "px;height:16px;background-color:blue;border:0;margin:0;padding:0;\"></div>"
+            + "</div>"
+            + "</div>"
+            + "</div>"
+    }
+    return graphStr;
+}
+
+function generateTableHeader(nn) {
+    var tableStr = "<tr><td>No.</td><td>Key</td>";
+    for(var i = 0; i < nn; i++ ) {
+        tableStr += "<td>"+ (i + 1) + "</td>";
+    }
+    tableStr += "<td>Step to Next</td></tr>";
+    return tableStr;
+}
+
+function generateTableRow(arrayOfNumbers, index, key, hasNext) {
+    var tableStr = "<td>" + index + "</td>" + "<td>" + key + "</td>";
+    for(var i = 0; i < arrayOfNumbers.length; i++ ) {
+        tableStr += "<td>"+ arrayOfNumbers[i] + "</td>";
+    }
+    if(hasNext) {
+        tableStr += "<td><button id=\"next\" onclick=\"onNext()\">Next</button></td></tr>";
+    } else {
+        tableStr += "<td>Done.</td></tr>";
+    }
+    return tableStr;
+}
+
+function onGenerateNumbers() {
+    var A = generateRandomNumbers();
+    updateNumbersView(A);
+    graph.innerHTML = generateGraphHtml(A);
+}
+
+function compare(a, b) {
+    if(ascending.checked ? (a > b) : (a < b)) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+    
+function InsertionSort(A, compFunc) {
+    this.A = A;
+    this.compareFunc = compFunc;
+    this.index = 0;
+    this.moveIndex = 0;
+    this.key = 'NULL';
+    // 0 - new find iteration
+    // 1 - new move iteration
+    // 2 - insert key
+    this.state = 0;
+    this.step = 0;
+}
+
+InsertionSort.prototype.hasNext = function() {
+    if(this.A.length <= 1 || this.index >= this.A.length) {
+        return false;
+    } else {
+        return true;
+    }
+}
+InsertionSort.prototype.next = function() {
+    switch(this.state) {
+    case 0:
+        this.index += 1;
+        if(this.index >= (this.A.length)) {
+            return false;
+        }
+
+        this.key = this.A[this.index];
+        this.moveIndex = this.index - 1;
+        this.state = 1;
+    case 1:
+        if (this.moveIndex > -1 
+            && this.compareFunc(this.A[this.moveIndex], this.key)) {
+            this.A[this.moveIndex + 1] = this.A[this.moveIndex];
+            this.moveIndex = this.moveIndex - 1;
+            break;
+        } else {
+            this.state = 2;
+        }
+    case 2:
+        this.A[this.moveIndex + 1] = this.key;
+        this.state = 0;
+        break;
+    }
+    if(this.index >= (this.A.length - 1) && this.state == 0) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+InsertionSort.prototype.sort = function() {
+    for(this.index = 1; this.index < this.A.length; this.index++ ) {
+        this.key = this.A[this.index];
+        this.moveIndex = this.index - 1;
+        while ( this.moveIndex > -1 && this.compareFunc(this.A[this.moveIndex], this.key) ) {
+            this.A[this.moveIndex + 1] = this.A[this.moveIndex];
+            this.moveIndex = this.moveIndex - 1;
+        }
+        this.A[this.moveIndex + 1] = this.key;
+    }
+}
+
+function onSort() {
+    var str = numbers.value;
+    var strArray = str.split(",");
+    var A = [];
+    for(var i = 0; i < strArray.length; i++) {
+        A.push(parseInt(strArray[i].replace(/^\s+|\s+$/g, '')));
+    }
+    
+    var insertionSort = new InsertionSort(A, compare);
+    insertionSort.sort();
+    graph.innerHTML = generateGraphHtml(insertionSort.A);
+    updateNumbersView(insertionSort.A);
+}
+
+var sort = {};
+
+function startSort() {
+    var str = numbers.value;
+    var strArray = str.split(",");
+    var A = [];
+    for(var i = 0; i < strArray.length; i++) {
+        A.push(parseInt(strArray[i].replace(/^\s+|\s+$/g, '')));
+    }
+    sort = new InsertionSort(A, compare);
+    output.innerHTML = generateTableHeader(A.length);
+    var tr = document.createElement('tr');
+    tr.innerHTML = generateTableRow(A, sort.step++, sort.key, sort.hasNext());
+    output.appendChild(tr);
+}
+
+function onNext() {
+    if(sort.hasNext()) {
+        var hasNext = sort.next();
+        next = document.getElementById("next");
+        next.parentNode.removeChild(next);
+        tr = document.createElement('tr');
+        tr.innerHTML = generateTableRow(sort.A, sort.step++, sort.key, hasNext);
+        output.appendChild(tr);
+    }
+    graph.innerHTML = generateGraphHtml(sort.A);
+
+}
+</script>
+
+</body>
